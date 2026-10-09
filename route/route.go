@@ -23,9 +23,15 @@ type Dependencies struct {
 func Register(app *fiber.App, deps Dependencies) {
 	// Susun rantai: repository -> service
 	userRepo := repository.NewUserRepository(deps.Pool)
+	studentRepo := repository.NewStudentRepository(deps.Pool)
+	courseRepo := repository.NewCourseRepository(deps.Pool)
+
 	authService := service.NewAuthService(userRepo, deps.JWT)
+	studentService := service.NewStudentService(studentRepo)
+	courseService := service.NewCourseService(courseRepo)
 
 	authRequired := middleware.RequireAuth(deps.JWT)
+	adminOnly := middleware.RequireRole("admin")
 
 	api := app.Group("/api/v1")
 
@@ -36,6 +42,17 @@ func Register(app *fiber.App, deps Dependencies) {
 	auth := api.Group("/auth", middleware.RequireJSON)
 	auth.Post("/login", middleware.LoginRateLimiter(), authService.Login)
 	auth.Get("/me", authRequired, authService.Me)
+
+	// --- mahasiswa: semua endpoint wajib login, sebagian khusus admin ---
+	students := api.Group("/students", authRequired, middleware.RequireJSON)
+	students.Get("/", adminOnly, studentService.GetStudents)
+	students.Post("/", adminOnly, studentService.CreateStudent)
+	students.Get("/:id", middleware.RequireRole("admin", "mahasiswa"), studentService.GetStudentByID) // admin atau pemilik data, dicek di service
+	students.Put("/:id", adminOnly, studentService.UpdateStudent)
+	students.Delete("/:id", adminOnly, studentService.DeleteStudent)
+
+	// --- mata kuliah: semua role yang sudah login ---
+	api.Get("/courses", authRequired, courseService.GetCourses)
 }
 
 // healthCheck melaporkan kondisi layanan beserta databasenya.
