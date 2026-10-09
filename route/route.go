@@ -25,13 +25,16 @@ func Register(app *fiber.App, deps Dependencies) {
 	userRepo := repository.NewUserRepository(deps.Pool)
 	studentRepo := repository.NewStudentRepository(deps.Pool)
 	courseRepo := repository.NewCourseRepository(deps.Pool)
+	enrollmentRepo := repository.NewEnrollmentRepository(deps.Pool)
 
 	authService := service.NewAuthService(userRepo, deps.JWT)
 	studentService := service.NewStudentService(studentRepo)
 	courseService := service.NewCourseService(courseRepo)
+	enrollmentService := service.NewEnrollmentService(enrollmentRepo)
 
 	authRequired := middleware.RequireAuth(deps.JWT)
 	adminOnly := middleware.RequireRole("admin")
+	mahasiswaOnly := middleware.RequireRole("mahasiswa")
 
 	api := app.Group("/api/v1")
 
@@ -53,6 +56,10 @@ func Register(app *fiber.App, deps Dependencies) {
 
 	// --- mata kuliah: semua role yang sudah login ---
 	api.Get("/courses", authRequired, courseService.GetCourses)
+
+	// --- KRS: khusus mahasiswa ---
+	enrollments := api.Group("/enrollments", authRequired, mahasiswaOnly, middleware.RequireJSON)
+	enrollments.Post("/", enrollmentService.CreateEnrollment)
 }
 
 // healthCheck melaporkan kondisi layanan beserta databasenya.
