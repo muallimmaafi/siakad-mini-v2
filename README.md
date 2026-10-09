@@ -151,4 +151,4 @@ Status code yang dipakai: 200, 201, 204, 401, 403, 404, 409, 415, 422, 429, 500.
 
 ## Pembuat
 
-Muallim Maafi Ahmad, NIM 434241122, TI-C4, D4 Teknik Informatika, Universitas Airlangga.
+Muallim Maafi Ahmad, NIM 434241122, TI-C8, D4 Teknik Informatika, Universitas Airlangga.
