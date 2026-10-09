@@ -34,3 +34,18 @@ type LoginResponse struct {
 	ExpiresIn   int       `json:"expires_in"` // detik
 	User        LoginUser `json:"user"`
 }
+
+// StudentProfile adalah data mahasiswa yang ikut tampil di /auth/me.
+type StudentProfile struct {
+	NIM      string `json:"nim"`
+	Nama     string `json:"nama"`
+	Prodi    string `json:"prodi"`
+	Angkatan int    `json:"angkatan"`
+}
+
+type MeResponse struct {
+	ID      int             `json:"id"`
+	Email   string          `json:"email"`
+	Role    string          `json:"role"`
+	Student *StudentProfile `json:"student,omitempty"`
+}
