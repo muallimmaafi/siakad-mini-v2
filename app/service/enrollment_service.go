@@ -72,3 +72,41 @@ func (s *EnrollmentService) CreateEnrollment(c *fiber.Ctx) error {
 
 	return helper.Success(c, fiber.StatusCreated, "Mata kuliah berhasil ditambahkan ke KRS", result)
 }
+
+// DeleteEnrollment: DELETE /api/v1/enrollments/:id (mahasiswa, milik sendiri)
+func (s *EnrollmentService) DeleteEnrollment(c *fiber.Ctx) error {
+	id, ok := helper.ParamID(c)
+	if !ok {
+		return helper.Fail(c, fiber.StatusNotFound, "Data KRS tidak ditemukan")
+	}
+
+	authUser, ok := helper.CurrentUser(c)
+	if !ok {
+		return helper.Fail(c, fiber.StatusUnauthorized, "Token tidak valid")
+	}
+
+	ctx, cancel := helper.RequestContext(c)
+	defer cancel()
+
+	// cari dulu (404 kalau tidak ada), baru cek kepemilikan (403)
+	ownerUserID, err := s.repo.FindOwnerUserID(ctx, id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return helper.Fail(c, fiber.StatusNotFound, "Data KRS tidak ditemukan")
+		}
+		return fmt.Errorf("cari pemilik KRS: %w", err)
+	}
+
+	if !CanModifyEnrollment(authUser.UserID, ownerUserID) {
+		return helper.Fail(c, fiber.StatusForbidden, "Anda tidak boleh mengakses KRS milik mahasiswa lain")
+	}
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return helper.Fail(c, fiber.StatusNotFound, "Data KRS tidak ditemukan")
+		}
+		return fmt.Errorf("hapus KRS: %w", err)
+	}
+
+	return helper.NoContent(c)
+}

@@ -60,6 +60,8 @@ func Register(app *fiber.App, deps Dependencies) {
 	// --- KRS: khusus mahasiswa ---
 	enrollments := api.Group("/enrollments", authRequired, mahasiswaOnly, middleware.RequireJSON)
 	enrollments.Post("/", enrollmentService.CreateEnrollment)
+	enrollments.Post("/", enrollmentService.CreateEnrollment)
+	enrollments.Delete("/:id", enrollmentService.DeleteEnrollment)
 }
 
 // healthCheck melaporkan kondisi layanan beserta databasenya.
@@ -75,3 +77,4 @@ func healthCheck(pool *pgxpool.Pool) fiber.Handler {
 			fiber.Map{"timestamp": time.Now()})
 	}
 }
+
